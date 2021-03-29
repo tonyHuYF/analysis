@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.space.analysis.mapper.SystemCourierMapper">
+
+    <insert id="batchInsert">
+        insert into system_courier(id,outbound_number,order_number,store_number,supplier_number,storage_number,goods_name,
+        goods_number,goods_num,courier_number,courier_name,goods_weight,outbound_date,source_status)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.outboundNumber},#{item.orderNumber},#{item.storeNumber},#{item.supplierNumber},#{item.storageNumber},#{item.goodsName},
+            #{item.goodsNumber},#{item.goodsNum},#{item.courierNumber},#{item.courierName},#{item.goodsWeight},#{item.outboundDate},#{item.sourceStatus})
+        </foreach>
+    </insert>
+
+</mapper>
