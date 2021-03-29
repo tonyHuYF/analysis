@@ -1,6 +1,7 @@
 package com.space.analysis.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceBuilder;
 import com.alibaba.druid.support.http.StatViewServlet;
 import com.alibaba.druid.support.http.WebStatFilter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -26,7 +27,7 @@ public class DruidConfig {
     @ConfigurationProperties("spring.datasource")
     @Bean
     public DataSource druid() {
-        return new DruidDataSource();
+        return DruidDataSourceBuilder.create().build();
     }
 
 
@@ -43,6 +44,9 @@ public class DruidConfig {
         initParam.put("loginPassword", "admin");
         //默认就是允许所有访问
         initParam.put("allow", "");
+        // 是否可以重置数据
+        initParam.put("resetEnable", "false");
+
         bean.setInitParameters(initParam);
         return bean;
     }
@@ -55,7 +59,7 @@ public class DruidConfig {
         FilterRegistrationBean bean = new FilterRegistrationBean();
         bean.setFilter(new WebStatFilter());
         Map<String, String> initParam = new HashMap<>();
-        initParam.put("exclusions", "*.js,*.css,/druid/*");
+        initParam.put("exclusions", "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*");
         bean.setInitParameters(initParam);
         bean.setUrlPatterns(Arrays.asList("/*"));
         return bean;
