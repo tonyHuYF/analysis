@@ -355,6 +355,8 @@ public class CourierService {
                         temp.setAmount(item.getAmount());
                         temp.setGoodsWeight(systemCourier.getGoodsWeight());
 
+                        temp.setErrorValue(item.getWeight().subtract(systemCourier.getGoodsWeight()));
+
                         result.add(temp);
                     }
                 }
@@ -396,6 +398,8 @@ public class CourierService {
             temp.put("weight", data.getWeight().toString());
             temp.put("amount", data.getAmount().toString());
             temp.put("goodsWeight", data.getGoodsWeight().toString());
+            temp.put("errorValue", data.getErrorValue().toString());
+
             maplist.add(temp);
 
             allWeight = allWeight.add(data.getWeight());

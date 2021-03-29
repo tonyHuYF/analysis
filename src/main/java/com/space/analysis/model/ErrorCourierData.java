@@ -54,5 +54,9 @@ public class ErrorCourierData implements Serializable {
      * 快递重量（系统）
      */
     private BigDecimal goodsWeight;
+    /**
+     * 误差
+     */
+    private BigDecimal errorValue;
 
 }
