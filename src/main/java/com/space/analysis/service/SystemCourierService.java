@@ -11,6 +11,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.space.analysis.async.ImportDataAsync;
 import com.space.analysis.domain.Courier;
 import com.space.analysis.domain.SystemCourier;
 import com.space.analysis.domain.param.QueryCourierParam;
@@ -39,6 +40,8 @@ public class SystemCourierService {
     private SystemCourierMapper systemCourierMapper;
     @Resource
     private CourierMapper courierMapper;
+    @Resource
+    private ImportDataAsync importDataAsync;
 
     /**
      * 增加
@@ -127,6 +130,7 @@ public class SystemCourierService {
     /**
      * 导入
      */
+    @Transactional
     public void importFile(MultipartFile file, int type) throws Exception {
         ImportParams params = new ImportParams();
         params.setHeadRows(1);
@@ -162,8 +166,22 @@ public class SystemCourierService {
             filterData.forEach(p -> p.setSourceStatus(1));
         }
 
+        //数据插入前，先删除已有数据
+        List<SystemCourier> existSysCouriers = systemCourierMapper.selectList(new QueryWrapper<>());
+        List<String> existNumbers = existSysCouriers.stream().map(SystemCourier::getCourierNumber).collect(Collectors.toList());
+
+        //带删除的快递数据
+        List<String> toDeleteNumbers = filterData.stream()
+                .filter(p -> existNumbers.contains(p.getCourierNumber())).map(SystemCourier::getCourierNumber).collect(Collectors.toList());
+
+        if (ObjectUtil.isNotEmpty(toDeleteNumbers)) {
+            QueryWrapper<SystemCourier> wrapper = new QueryWrapper<>();
+            wrapper.in("courier_number", toDeleteNumbers);
+            systemCourierMapper.delete(wrapper);
+        }
+
         //插入数据
-        batchInsert(filterData);
+        importDataAsync.batchInsert(filterData, systemCourierMapper);
 
     }
 
@@ -179,43 +197,6 @@ public class SystemCourierService {
         List<T> result = ExcelImportUtil.importExcel(file.getInputStream(), classzz, params);
 
         return result;
-    }
-
-    /**
-     * 批量插入
-     */
-    @Transactional
-    public void batchInsert(List<SystemCourier> systemCouriers) {
-        if (ObjectUtil.isNotEmpty(systemCouriers)) {
-            //数据插入前，先删除已有数据
-            List<SystemCourier> existSysCouriers = systemCourierMapper.selectList(new QueryWrapper<>());
-            List<String> existNumbers = existSysCouriers.stream().map(SystemCourier::getCourierNumber).collect(Collectors.toList());
-
-            //带删除的快递数据
-            List<String> toDeleteNumbers = systemCouriers.stream()
-                    .filter(p -> existNumbers.contains(p.getCourierNumber())).map(SystemCourier::getCourierNumber).collect(Collectors.toList());
-
-
-            if (ObjectUtil.isNotEmpty(toDeleteNumbers)) {
-                QueryWrapper<SystemCourier> wrapper = new QueryWrapper<>();
-                wrapper.in("courier_number", toDeleteNumbers);
-                systemCourierMapper.delete(wrapper);
-            }
-
-
-            int fromIndex = 0;
-            while (true) {
-                int toIndex = fromIndex + 100;
-                if (toIndex > systemCouriers.size()) {
-                    toIndex = systemCouriers.size();
-                    systemCourierMapper.batchInsert(systemCouriers.subList(fromIndex, toIndex));
-                    break;
-                }
-
-                systemCourierMapper.batchInsert(systemCouriers.subList(fromIndex, toIndex));
-                fromIndex = toIndex;
-            }
-        }
     }
 
 

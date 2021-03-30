@@ -14,6 +14,7 @@ import cn.hutool.http.HttpResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.space.analysis.async.ImportDataAsync;
 import com.space.analysis.domain.Courier;
 import com.space.analysis.domain.ResultBean;
 import com.space.analysis.domain.SystemCourier;
@@ -48,6 +49,9 @@ public class CourierService {
     private CourierMapper courierMapper;
     @Resource
     private SystemCourierMapper systemCourierMapper;
+
+    @Resource
+    private ImportDataAsync importDataAsync;
 
     /**
      * 增加
@@ -152,6 +156,7 @@ public class CourierService {
     /**
      * 导入
      */
+    @Transactional
     public void importFile(MultipartFile file, int type) throws Exception {
         List<T> data;
         ImportParams params = new ImportParams();
@@ -196,9 +201,22 @@ public class CourierService {
         //过滤运单号空值数据
         List<Courier> filterData = couriers.stream().filter(p -> ObjectUtil.isNotEmpty(p.getCourierNumber())).collect(Collectors.toList());
 
+        //先删除已有的数据，后插入
+        List<Courier> existCouriers = courierMapper.selectList(new QueryWrapper<>());
+        List<String> existNumbers = existCouriers.stream().map(Courier::getCourierNumber).collect(Collectors.toList());
+
+        //带删除的快递数据
+        List<String> toDeleteNumbers = filterData.stream()
+                .filter(p -> existNumbers.contains(p.getCourierNumber())).map(Courier::getCourierNumber).collect(Collectors.toList());
+
+        if (ObjectUtil.isNotEmpty(toDeleteNumbers)) {
+            QueryWrapper<Courier> wrapper = new QueryWrapper<>();
+            wrapper.in("courier_number", toDeleteNumbers);
+            courierMapper.delete(wrapper);
+        }
 
         //插入数据
-        batchInsert(filterData);
+        importDataAsync.batchInsert(filterData, courierMapper);
 
     }
 
@@ -216,41 +234,6 @@ public class CourierService {
         return result;
     }
 
-    /**
-     * 批量插入
-     */
-    @Transactional
-    public void batchInsert(List<Courier> couriers) {
-        if (ObjectUtil.isNotEmpty(couriers)) {
-            //数据插入前，先删除已有数据
-            List<Courier> existCouriers = courierMapper.selectList(new QueryWrapper<>());
-            List<String> existNumbers = existCouriers.stream().map(Courier::getCourierNumber).collect(Collectors.toList());
-
-            //带删除的快递数据
-            List<String> toDeleteNumbers = couriers.stream()
-                    .filter(p -> existNumbers.contains(p.getCourierNumber())).map(Courier::getCourierNumber).collect(Collectors.toList());
-
-            if (ObjectUtil.isNotEmpty(toDeleteNumbers)) {
-                QueryWrapper<Courier> wrapper = new QueryWrapper<>();
-                wrapper.in("courier_number", toDeleteNumbers);
-                courierMapper.delete(wrapper);
-            }
-
-
-            int fromIndex = 0;
-            while (true) {
-                int toIndex = fromIndex + 100;
-                if (toIndex > couriers.size()) {
-                    toIndex = couriers.size();
-                    courierMapper.batchInsert(couriers.subList(fromIndex, toIndex));
-                    break;
-                }
-
-                courierMapper.batchInsert(couriers.subList(fromIndex, toIndex));
-                fromIndex = toIndex;
-            }
-        }
-    }
 
     /**
      * 查看快递重量存在误差数据--分页
