@@ -82,8 +82,8 @@ public class SystemCourierController {
      * tpye，默认：0（0：全部，1：伦邦）
      */
     @GetMapping("/import")
-    public void importFile(MultipartFile file, int type) throws Exception {
-        systemCourierService.importFile(file,type);
+    public void importFile(MultipartFile file) throws Exception {
+        systemCourierService.importFile(file);
     }
 
     /**

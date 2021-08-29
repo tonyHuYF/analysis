@@ -3,12 +3,12 @@
 <mapper namespace="com.space.analysis.mapper.SystemCourierMapper">
 
     <insert id="batchInsert">
-        insert into system_courier(id,outbound_number,order_number,store_number,supplier_number,storage_number,goods_name,
-        goods_number,goods_num,courier_number,courier_name,goods_weight,outbound_date,source_status)
+        insert into system_courier(id,order_number,shop_name,good_name,send_date,courier_number,courier_name,goods_weight,
+        source_status)
         values
         <foreach collection="list" item="item" separator=",">
-            (#{item.id}, #{item.outboundNumber},#{item.orderNumber},#{item.storeNumber},#{item.supplierNumber},#{item.storageNumber},#{item.goodsName},
-            #{item.goodsNumber},#{item.goodsNum},#{item.courierNumber},#{item.courierName},#{item.goodsWeight},#{item.outboundDate},#{item.sourceStatus})
+            (#{item.id}, #{item.orderNumber},#{item.shopName},#{item.goodName},#{item.sendDate},#{item.courierNumber},#{item.courierName},#{item.goodsWeight},
+            #{item.sourceStatus})
         </foreach>
     </insert>
 

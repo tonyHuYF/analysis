@@ -14,8 +14,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.space.analysis.async.ImportDataAsync;
 import com.space.analysis.domain.Courier;
 import com.space.analysis.domain.SystemCourier;
-import com.space.analysis.domain.param.QueryCourierParam;
-import com.space.analysis.domain.param.QueryErrorCourierDataParam;
 import com.space.analysis.domain.param.QueryLbCourierDataParam;
 import com.space.analysis.domain.param.QuerySystemCourierParam;
 import com.space.analysis.mapper.CourierMapper;
@@ -131,7 +129,7 @@ public class SystemCourierService {
      * 导入
      */
     @Transactional
-    public void importFile(MultipartFile file, int type) throws Exception {
+    public void importFile(MultipartFile file) throws Exception {
         ImportParams params = new ImportParams();
         params.setHeadRows(1);
         params.setTitleRows(0);
@@ -144,27 +142,31 @@ public class SystemCourierService {
             SystemCourier temp = new SystemCourier();
             BeanUtil.copyProperties(item, temp);
             //处理快递单号空格
-            temp.setCourierNumber(StrUtil.trim(temp.getCourierNumber()));
+            temp.setCourierNumber(StrUtil.trim(temp.getCourierNumber().replace("@", "")));
             systemCouriers.add(temp);
         }
 
         //过滤运单号空值数据，过滤重复数据（即没快递重量的）
         List<SystemCourier> filterData = systemCouriers.stream()
                 .filter(p -> ObjectUtil.isNotEmpty(p.getCourierNumber()))
-                .filter(p -> ObjectUtil.isNotEmpty(p.getGoodsWeight()))
                 .collect(Collectors.toList());
 
-        //重量转换千克
-        for (SystemCourier item : filterData) {
-            if (ObjectUtil.isNotEmpty(item.getGoodsWeight())) {
-                item.setGoodsWeight(item.getGoodsWeight().divide(new BigDecimal(1000)));
-            }
-        }
+//        //重量转换千克
+//        for (SystemCourier item : filterData) {
+//            if (ObjectUtil.isNotEmpty(item.getGoodsWeight())) {
+//                item.setGoodsWeight(item.getGoodsWeight().divide(new BigDecimal(1000)));
+//            }
+//        }
 
         //伦邦数据
-        if (type != 0) {
-            filterData.forEach(p -> p.setSourceStatus(1));
-        }
+        filterData.forEach(p -> {
+            if ("伦邦旗舰店".equals(p.getShopName())) {
+                p.setSourceStatus(1);
+            } else {
+                p.setSourceStatus(0);
+            }
+        });
+
 
         //数据插入前，先删除已有数据
         List<SystemCourier> existSysCouriers = systemCourierMapper.selectList(new QueryWrapper<>());
@@ -247,7 +249,7 @@ public class SystemCourierService {
             temp.setCourierName(item.getCourierName());
             temp.setCourierNumber(item.getCourierNumber());
             temp.setSendDate(courier.getSendDate());
-            temp.setGoodsName(item.getGoodsName());
+            temp.setGoodsName(item.getGoodName());
             temp.setGoodsWeight(item.getGoodsWeight());
             temp.setWeight(courier.getWeight());
             temp.setAmount(courier.getAmount());

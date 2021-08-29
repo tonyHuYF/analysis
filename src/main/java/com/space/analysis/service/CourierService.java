@@ -300,47 +300,57 @@ public class CourierService {
 
         List<SystemCourier> systemCouriers = systemCourierMapper.selectList(systemCourierWrapper);
 
-        //先筛选出有重量的数据
-        List<SystemCourier> allSystemCourier = systemCouriers.stream()
-                .filter(p -> p.getGoodsWeight().compareTo(new BigDecimal(0)) > 0)
-                .collect(Collectors.toList());
+//        //先筛选出有重量的数据
+//        List<SystemCourier> allSystemCourier = systemCouriers.stream()
+//                .filter(p -> p.getGoodsWeight().compareTo(new BigDecimal(0)) > 0)
+//                .collect(Collectors.toList());
 
-        Map<String, SystemCourier> systemCourierMap = allSystemCourier.stream().collect(
-                Collectors.toMap(k -> k.getCourierNumber(), v -> v));
+//        Map<String, SystemCourier> systemCourierMap = allSystemCourier.stream().collect(
+//                Collectors.toMap(k -> k.getCourierNumber(), v -> v));
+
+        Map<String, List<SystemCourier>> systemCourierMap = systemCouriers.stream().collect(Collectors.groupingBy(SystemCourier::getCourierNumber));
 
 
         List<ErrorCourierData> result = new ArrayList<>();
 
         for (Courier item : couriers) {
-            SystemCourier systemCourier = systemCourierMap.get(item.getCourierNumber());
-            if (ObjectUtil.isNotEmpty(systemCourier)) {
-                //当快递重量大于系统存的快递重量
-                if (item.getWeight().compareTo(systemCourier.getGoodsWeight()) == 1) {
-                    //小数进一比较重量是否存在误差
-                    BigDecimal courierWeight = item.getWeight().setScale(0, BigDecimal.ROUND_UP);
-                    BigDecimal systemWeight = systemCourier.getGoodsWeight().setScale(0, BigDecimal.ROUND_UP);
-                    if (courierWeight.compareTo(systemWeight) == 1) {
-                        ErrorCourierData temp = new ErrorCourierData();
-                        String companyName = "";
-                        if (systemCourier.getSourceStatus() == 1) {
-                            companyName = "伦邦旗舰店";
-                        } else {
-                            companyName = "空间汇旗舰店";
+            List<SystemCourier> data = systemCourierMap.get(item.getCourierNumber());
+            if (ObjectUtil.isNotEmpty(data)) {
+                SystemCourier systemCourier = data.get(0);
+                if (data.size() > 1) {
+                    BigDecimal goodsWeight = data.stream().map(SystemCourier::getGoodsWeight).reduce(BigDecimal::add).get();
+                    systemCourier.setGoodsWeight(goodsWeight);
+                }
+
+                if (ObjectUtil.isNotEmpty(systemCourier)) {
+                    //当快递重量大于系统存的快递重量
+                    if (item.getWeight().compareTo(systemCourier.getGoodsWeight()) == 1) {
+                        //小数进一比较重量是否存在误差
+                        BigDecimal courierWeight = item.getWeight().setScale(0, BigDecimal.ROUND_UP);
+                        BigDecimal systemWeight = systemCourier.getGoodsWeight().setScale(0, BigDecimal.ROUND_UP);
+                        if (courierWeight.compareTo(systemWeight) == 1) {
+                            ErrorCourierData temp = new ErrorCourierData();
+                            String companyName = "";
+                            if (systemCourier.getSourceStatus() == 1) {
+                                companyName = "伦邦旗舰店";
+                            } else {
+                                companyName = "空间汇旗舰店";
+                            }
+                            temp.setCompanyName(companyName);
+                            temp.setOrderNumber(systemCourier.getOrderNumber());
+                            temp.setCourierName(systemCourier.getCourierName());
+                            temp.setCourierNumber(item.getCourierNumber());
+                            temp.setSendDate(item.getSendDate());
+                            temp.setSendProvince(item.getSendProvince());
+                            temp.setSendCity(item.getSendCity());
+                            temp.setWeight(item.getWeight());
+                            temp.setAmount(item.getAmount());
+                            temp.setGoodsWeight(systemCourier.getGoodsWeight());
+
+                            temp.setErrorValue(item.getWeight().subtract(systemCourier.getGoodsWeight()));
+
+                            result.add(temp);
                         }
-                        temp.setCompanyName(companyName);
-                        temp.setOrderNumber(systemCourier.getOrderNumber());
-                        temp.setCourierName(systemCourier.getCourierName());
-                        temp.setCourierNumber(item.getCourierNumber());
-                        temp.setSendDate(item.getSendDate());
-                        temp.setSendProvince(item.getSendProvince());
-                        temp.setSendCity(item.getSendCity());
-                        temp.setWeight(item.getWeight());
-                        temp.setAmount(item.getAmount());
-                        temp.setGoodsWeight(systemCourier.getGoodsWeight());
-
-                        temp.setErrorValue(item.getWeight().subtract(systemCourier.getGoodsWeight()));
-
-                        result.add(temp);
                     }
                 }
             }
