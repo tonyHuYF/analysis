@@ -1,6 +1,5 @@
 package com.space.analysis.domain;
 
-import cn.afterturn.easypoi.excel.annotation.Excel;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -20,7 +19,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("system_courier")
-public class SystemCourier implements Serializable {
+public class SystemCourierOld implements Serializable {
 
     private static final long serialVersionUID = -2417304522008102287L;
     /**
@@ -29,35 +28,55 @@ public class SystemCourier implements Serializable {
     @TableId(type = IdType.ASSIGN_UUID)
     private String id;
     /**
-     * 线上订单号
+     * 出库单号
+     */
+    private String outboundNumber;
+    /**
+     * 订单号
      */
     private String orderNumber;
     /**
-     * 店铺名称
+     * 网店单号
      */
-    private String shopName;
+    private String storeNumber;
+    /**
+     * 渠道商名称
+     */
+    private String supplierNumber;
+    /**
+     * 库位编号
+     */
+    private String storageNumber;
     /**
      * 商品名称
      */
-    private String goodName;
+    private String goodsName;
     /**
-     * 发货日期
+     * 货号
      */
-    private Date sendDate;
+    private String goodsNumber;
     /**
-     * 快递公司
+     * 商品数量
      */
-    private String courierName;
+    private BigDecimal goodsNum;
     /**
      * 快递单号（运单号）
      */
     private String courierNumber;
     /**
+     * 快递公司
+     */
+    private String courierName;
+    /**
      * 商品总重量(kg)
      */
     private BigDecimal goodsWeight;
     /**
-     * 数据来源，默认：0（0：空间汇，1：伦邦）
+     * 出库时间
+     */
+    private Date outboundDate;
+    /**
+     * 数据来源，默认：0（0：全部，1：伦邦）
      */
     private int sourceStatus = 0;
 

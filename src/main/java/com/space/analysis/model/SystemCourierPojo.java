@@ -1,9 +1,6 @@
 package com.space.analysis.model;
 
 import cn.afterturn.easypoi.excel.annotation.Excel;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,68 +20,52 @@ public class SystemCourierPojo implements Serializable {
 
     private static final long serialVersionUID = -2417304522008102287L;
     /**
-     * 出库单号
+     * 线上订单号
      */
-    @Excel(name = "出库单号")
-    private String outboundNumber;
-    /**
-     * 订单号
-     */
-    @Excel(name = "订单号")
+    @Excel(name = "线上订单号")
     private String orderNumber;
     /**
-     * 网店单号
+     * 店铺名称
      */
-    @Excel(name = "网店单号")
-    private String storeNumber;
-    /**
-     * 渠道商名称
-     */
-    @Excel(name = "渠道商名称")
-    private String supplierNumber;
-    /**
-     * 库位编号
-     */
-    @Excel(name = "库位编号")
-    private String storageNumber;
+    @Excel(name = "店铺名称")
+    private String shopName;
     /**
      * 商品名称
      */
     @Excel(name = "商品名称")
-    private String goodsName;
+    private String goodName;
     /**
-     * 货号
+     * 发货日期
      */
-    @Excel(name = "货号")
-    private String goodsNumber;
-    /**
-     * 商品数量
-     */
-    @Excel(name = "商品数量")
-    private BigDecimal goodsNum;
-    /**
-     * 快递单号（运单号）
-     */
-    @Excel(name = "快递单号")
-    private String courierNumber;
+    @Excel(name = "发货日期", importFormat = "yyyy/MM/dd")
+    private Date sendDate;
     /**
      * 快递公司
      */
     @Excel(name = "快递公司")
     private String courierName;
     /**
+     * 快递单号（运单号）
+     */
+    @Excel(name = "快递单号")
+    private String courierNumber;
+    /**
      * 商品总重量(kg)
      */
-    @Excel(name = "商品总重量(克)")
+    @Excel(name = "订单商品重量")
     private BigDecimal goodsWeight;
     /**
-     * 出库时间
-     */
-    @Excel(name = "出库时间", importFormat = "yyyy-MM-dd")
-    private Date outboundDate;
-    /**
-     * 数据来源，默认：0（0：全部，1：伦邦）
+     * 数据来源，默认：0（0：空间汇，1：伦邦）
      */
     private int sourceStatus = 0;
+
+
+    private void setSourceStatus() {
+        if ("伦邦旗舰店".equals(this.shopName)) {
+            this.sourceStatus = 1;
+        } else {
+            sourceStatus = 0;
+        }
+    }
 
 }
