@@ -142,7 +142,10 @@ public class SystemCourierService {
             SystemCourier temp = new SystemCourier();
             BeanUtil.copyProperties(item, temp);
             //处理快递单号空格
-            temp.setCourierNumber(StrUtil.trim(temp.getCourierNumber().replace("@", "")));
+            if(ObjectUtil.isNotEmpty(temp.getCourierNumber())){
+                temp.setCourierNumber(StrUtil.trim(temp.getCourierNumber().replace("@", "")));
+            }
+
             systemCouriers.add(temp);
         }
 
